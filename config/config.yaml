@@ -1,0 +1,10 @@
+input_fasta: your_sequences.fasta
+templates_dir: input/templates
+output_dir: output
+target_chains: "A B C D E F G H I J K L M N O"
+template_chains: "A B C A B C A B C A B C A B C"
+af_unmasked_container: ../../../../../singularity_containers/af2_unmasked/af_unmasked.sif
+af3_flags:
+  --af3_container: ../../../../../singularity_containers/af2_unmasked/patched_af3_commit_9befb639292fb53fa36b5a3e6ee0273e5a1d1094_with_af_unmasked.sif
+
+

@@ -1,0 +1,11 @@
+executor: slurm
+
+default-resources:
+    slurm_partition: "allcpu"
+    slurm_account: "cssb"
+
+set-resources:
+    PREPARE_TEMPLATES_AF3:
+        slurm_partition: "allcpu"
+        nodes: 1
+        runtime: 10
