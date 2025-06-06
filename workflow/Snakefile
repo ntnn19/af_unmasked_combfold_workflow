@@ -110,7 +110,7 @@ checkpoint PREPARE_AF_UNMAKSED_INPUTS:
         directory(os.path.join(OUTDIR,"rule_PREPARE_AF_UNMAKSED_INPUTS"))
     shell:
         """
-        python workflow/scripts/prepare_csv_from_fasta.py {input.fasta} --output-dir {output} -t {params.templates_dir}
+        python workflow/scripts/prepare_csv_from_fasta.py {input.fasta} --output-dir {output} -t {params.templates_dir} --max-size 3
         """
 
 checkpoint SANITISE_NAMES:

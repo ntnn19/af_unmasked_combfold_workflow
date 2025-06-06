@@ -1,5 +1,5 @@
 input_fasta: your_sequences.fasta
-templates_dir: input/templates
+templates_dir: input/templates_bak
 output_dir: output
 tmp_dir: tmp
 af_unmasked_container: ../../../../../singularity_containers/af2_unmasked/af_unmasked.sif
