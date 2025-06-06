@@ -1,10 +1,13 @@
 input_fasta: your_sequences.fasta
 templates_dir: input/templates
 output_dir: output
-target_chains: "A B C D E F G H I J K L M N O"
-template_chains: "A B C A B C A B C A B C A B C"
+tmp_dir: tmp
 af_unmasked_container: ../../../../../singularity_containers/af2_unmasked/af_unmasked.sif
+stoichio: 12A12B12C
+uniform_copies: "true"
+combfold_container: ../../../../../singularity_containers/combfold/combfold_v1.0.0.sif
 af3_flags:
+#  --af3_container: ../../../../../singularity_containers/alphafold3/alphafold3_parallel_a100_40gb_latest_template_free_.sif
   --af3_container: ../../../../../singularity_containers/af2_unmasked/patched_af3_commit_9befb639292fb53fa36b5a3e6ee0273e5a1d1094_with_af_unmasked.sif
 
 

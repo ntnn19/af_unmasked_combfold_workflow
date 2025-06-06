@@ -8,4 +8,10 @@ set-resources:
     PREPARE_TEMPLATES_AF3:
         slurm_partition: "allcpu"
         nodes: 1
-        runtime: 10
+        runtime: 100
+    AF3_DATA_PLUS_INFERENCE:
+        slurm_partition: "allgpu,vds,cssbgpu"
+        nodes: 1
+        runtime: 1000
+        slurm_extra: "'--constraint=(A100|H100)'"
+#        slurm_extra: "'--exclude=max-cssbg[018-023] --constraint=(A100|H100)'"
