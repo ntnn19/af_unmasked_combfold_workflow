@@ -1,4 +1,4 @@
-localrules: REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB, PREPARE_COMBFOLD_INPUT, PREPARE_TEMPLATES_AF3, SANITISE_NAMES
+localrules: REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB, PREPARE_COMBFOLD_INPUT, PREPARE_TEMPLATES_AF2, SANITISE_NAMES
 from Bio import SeqIO
 import os
 import string 
@@ -25,34 +25,6 @@ TEMPLATES, = glob_wildcards(os.path.join(TEMPLATES_DIR, "{template}.pdb"))
 SANITISED_TEMPLATES = ",".join([sanitise_name(t) for t in TEMPLATES])
 SANITISED_SEQ_IDS = [sanitise_name(s) for s in SEQ_IDS]
 
-# AF3 FLAGS
-BUCKETS = get_af3_flag_value('--buckets', '256,512,768,1024,1280,1536,2048,2560,3072,3584,4096,4608,5120')
-FLASH_ATTENTION_IMPLEMENTATION = get_af3_flag_value('--flash_attention_implementation', 'triton')
-HMMALIGN_BINARY_PATH = get_af3_flag_value('--hmmalign_binary_path', '/hmmer/bin/hmmalign')
-HMMBUILD_BINARY_PATH = get_af3_flag_value('--hmmbuild_binary_path', '/hmmer/bin/hmmbuild')
-HMMSEARCH_BINARY_PATH = get_af3_flag_value('--hmmsearch_binary_path', '/hmmer/bin/hmmsearch')
-JACKHMMER_BINARY_PATH = get_af3_flag_value('--jackhmmer_binary_path', '/hmmer/bin/jackhmmer')
-JACKHMMER_N_CPU = get_af3_flag_value('--jackhmmer_n_cpu', 8)
-JAX_COMPILATION_CACHE_DIR = get_af3_flag_value('--jax_compilation_cache_dir', '/path/to/cache')
-MAX_TEMPLATE_DATE = get_af3_flag_value('--max_template_date', '2021-09-30')
-MGNIFY_DATABASE_PATH = get_af3_flag_value('--mgnify_database_path', os.path.join('/root/public_databases','mgy_clusters_2022_05.fa'))
-NHMMER_BINARY_PATH = get_af3_flag_value('--nhmmer_binary_path', '/hmmer/bin/nhmmer')
-NHMMER_N_CPU = get_af3_flag_value('--nhmmer_n_cpu', 8)
-NTRNA_DATABASE_PATH = get_af3_flag_value('--ntrna_database_path', os.path.join('/root/public_databases','nt_rna_2023_02_23_clust_seq_id_90_cov_80_rep_seq.fasta'))
-NUM_DIFFUSION_SAMPLES = get_af3_flag_value('--num_diffusion_samples', 5)
-
-if "--num_seeds" in config["af3_flags"]:
-    NUM_SEEDS_ARG = f"--num_seeds={config['af3_flags']['--num_seeds']}"
-else:
-    NUM_SEEDS_ARG = f""
-
-PDB_DATABASE_PATH = get_af3_flag_value('--pdb_database_path', os.path.join('/root/public_databases','mmcif_files'))
-RFAM_DATABASE_PATH = get_af3_flag_value('--rfam_database_path', os.path.join('/root/public_databases','rfam_14_9_clust_seq_id_90_cov_80_rep_seq.fasta'))
-RNA_CENTRAL_DATABASE_PATH = get_af3_flag_value('--rna_central_database_path', os.path.join('/root/public_databases','rnacentral_active_seq_id_90_cov_80_linclust.fasta'))
-SEQRES_DATABASE_PATH = get_af3_flag_value('--seqres_database_path', os.path.join('/root/public_databases','pdb_seqres_2022_09_28.fasta'))
-SMALL_BFD_DATABASE_PATH = get_af3_flag_value('--small_bfd_database_path', os.path.join('/root/public_databases','bfd-first_non_consensus_sequences.fasta'))
-UNIPROT_CLUSTER_ANNOT_DATABASE_PATH = get_af3_flag_value('--uniprot_cluster_annot_database_path', os.path.join('/root/public_databases','uniprot_all_2021_04.fa'))
-UNIREF90_DATABASE_PATH = get_af3_flag_value('--uniref90_database_path', os.path.join('/root/public_databases','uniref90_2022_05.fa'))
 AF3_CONTAINER = config["af3_flags"]["--af3_container"]
 
 # COMBFOLD FLAGS
@@ -71,11 +43,11 @@ def get_rule_RUN_COMBFOLD_ASSEMBLY(wildcards):
     TEMPLATES, COMBINATIONS, = glob_wildcards(os.path.join(ck_outputs, "{template}","{comb}.json"))
     return expand(os.path.join(OUTDIR,"rule_RUN_COMBFOLD_ASSEMBLY","{template}","{comb}","assembled_results","confidence.txt"), template = TEMPLATES , comb = COMBINATIONS)
 
-def get_rule_PREPARE_TEMPLATES_AF3(wildcards):
+def get_rule_PREPARE_TEMPLATES_AF2(wildcards):
     ck_outputs = checkpoints.PREPARE_AF_UNMAKSED_INPUTS.get(**wildcards).output[0]
-    print("get_rule_AF3_DATA_PLUS_INFERENCE=",ck_outputs)
+    print("get_rule_AF2_DATA_PLUS_INFERENCE=",ck_outputs)
     TEMPLATES, SEQ_IDS, = glob_wildcards(os.path.join(ck_outputs, "{template}","{seq_id}_{template}.fasta"))
-    return expand(os.path.join(OUTDIR,"rule_PREPARE_TEMPLATES_AF3","{template}","{seq_id}_{template}","fold_input.json"), template = TEMPLATES , seq_id = SEQ_IDS)
+    return expand(os.path.join(OUTDIR,"rule_PREPARE_TEMPLATES_AF2","{template}","{seq_id}_{template}","fold_input.json"), template = TEMPLATES , seq_id = SEQ_IDS)
 
 def get_rule_PREPARE_COMBFOLD_INPUT(wildcards):
     ck_outputs = checkpoints.PREPARE_COMBFOLD_INPUT.get(**wildcards).output[0]
@@ -85,19 +57,19 @@ def get_rule_PREPARE_COMBFOLD_INPUT(wildcards):
 
 def get_rule_PREPARE_AF_UNMAKSED_INPUTS(wildcards):
     ck_outputs = checkpoints.PREPARE_AF_UNMAKSED_INPUTS.get(**wildcards).output[0]
-    print("get_rule_AF3_DATA_PLUS_INFERENCE=",ck_outputs)
+    print("get_rule_AF2_DATA_PLUS_INFERENCE=",ck_outputs)
     TEMPLATES, SEQ_IDS, = glob_wildcards(os.path.join(ck_outputs, "{template}","{seq_id}_{template}.fasta"))
     return expand(os.path.join(ck_outputs,"{template}","{seq_id}_{template}.fasta"), template = TEMPLATES , seq_id = SEQ_IDS)
 
-def get_rule_AF3_DATA_PLUS_INFERENCE(wildcards):
+def get_rule_AF2_DATA_PLUS_INFERENCE(wildcards):
     ck_outputs = checkpoints.SANITISE_NAMES.get(**wildcards).output[0]
-    print("get_rule_AF3_DATA_PLUS_INFERENCE=",ck_outputs)
+    print("get_rule_AF2_DATA_PLUS_INFERENCE=",ck_outputs)
     TEMPLATES, SEQ_IDS, = glob_wildcards(os.path.join(ck_outputs, "{template}","{seq_id}_{template}.fasta"))
-    return expand(os.path.join(OUTDIR,"rule_AF3_DATA_PLUS_INFERENCE", "{template}","{seq_id}_{template}","{seq_id}_{template}_model.cif"), template = TEMPLATES , seq_id = SEQ_IDS)
+    return expand(os.path.join(OUTDIR,"rule_COLLECT_TOP_PREDICTIONS","{template}","{seq_id}_{template}_ranked_0.pdb"), template = TEMPLATES , seq_id = SEQ_IDS)
 
 rule all:
     input:
-        get_rule_AF3_DATA_PLUS_INFERENCE,
+        get_rule_AF2_DATA_PLUS_INFERENCE,
         get_rule_PREPARE_COMBFOLD_INPUT,
         get_rule_RUN_COMBFOLD_ASSEMBLY
 
@@ -110,7 +82,7 @@ checkpoint PREPARE_AF_UNMAKSED_INPUTS:
         directory(os.path.join(OUTDIR,"rule_PREPARE_AF_UNMAKSED_INPUTS"))
     shell:
         """
-        python workflow/scripts/prepare_csv_from_fasta.py {input.fasta} --output-dir {output} -t {params.templates_dir} --max-size 3
+        python workflow/scripts/prepare_csv_from_fasta.py {input.fasta} --output-dir {output} -t {params.templates_dir} 
         """
 
 checkpoint SANITISE_NAMES:
@@ -128,14 +100,14 @@ checkpoint SANITISE_NAMES:
             shutil.copy(f, sanitised_output)
 
 
-rule PREPARE_TEMPLATES_AF3:
+rule PREPARE_TEMPLATES_AF2:
     input:
         fasta = os.path.join(OUTDIR,"rule_SANITISE_NAMES", "{template}","{seq_id}_{template}.fasta"),
         structure = os.path.join(TEMPLATES_DIR, "{template}.pdb")
     container:
         AF_UNMASKED_CONTAINER
     output:
-        os.path.join(OUTDIR,"rule_PREPARE_TEMPLATES_AF3","{template}","{seq_id}_{template}","fold_input.json")
+        os.path.join(OUTDIR,"rule_PREPARE_TEMPLATES_AF2","{template}","{seq_id}_{template}","template_data","templates.flag")
     shell:
         """
         CHAIN_INFO=$(python /app/utils/chain_pair_generator.py {wildcards.seq_id} | tr '[:lower:]' '[:upper:]')
@@ -144,95 +116,44 @@ rule PREPARE_TEMPLATES_AF3:
         TEMPLATE_CHAINS=$(echo "$CHAIN_INFO" | cut -d'-' -f1 | xargs)
         echo $TARGET_CHAINS
         echo $TEMPLATE_CHAINS
-        python /app/alphafold/prepare_templates_af3.py --target {input.fasta} \
+        python /app/alphafold/prepare_templates.py --target {input.fasta} \
         --template {input.structure} \
-        --output_dir {OUTDIR}/rule_PREPARE_TEMPLATES_AF3/{wildcards.template} \
-        --align \
+        --output_dir {OUTDIR}/rule_PREPARE_TEMPLATES_AF2/{wildcards.template} \
         --target_chains $TARGET_CHAINS \
         --template_chains $TEMPLATE_CHAINS
         """
 
 
-rule AF3_DATA_PLUS_INFERENCE:
+rule AF2_DATA_PLUS_INFERENCE:
     input:
-        os.path.join(OUTDIR,"rule_PREPARE_TEMPLATES_AF3","{template}","{seq_id}_{template}","fold_input.json")
-    params:
-        buckets = BUCKETS,
-        flash_attention_implementation = FLASH_ATTENTION_IMPLEMENTATION,
-        hmmalign_binary_path = HMMALIGN_BINARY_PATH,
-        hmmbuild_binary_path = HMMBUILD_BINARY_PATH,
-        hmmsearch_binary_path = HMMSEARCH_BINARY_PATH,
-        jackhmmer_binary_path = JACKHMMER_BINARY_PATH,
-        jackhmmer_n_cpu = JACKHMMER_N_CPU,
-        jax_compilation_cache_dir = JAX_COMPILATION_CACHE_DIR,
-        max_template_date = MAX_TEMPLATE_DATE,
-        mgnify_database_path = MGNIFY_DATABASE_PATH,
-        nhmmer_binary_path = NHMMER_BINARY_PATH,
-        nhmmer_n_cpu = NHMMER_N_CPU,
-        ntrna_database_path = NTRNA_DATABASE_PATH,
-        num_diffusion_samples = NUM_DIFFUSION_SAMPLES,
-        num_seeds_arg = NUM_SEEDS_ARG,
-        pdb_database_path = PDB_DATABASE_PATH,
-        rfam_database_path = RFAM_DATABASE_PATH,
-        rna_central_database_path = RNA_CENTRAL_DATABASE_PATH,
-        seqres_database_path = SEQRES_DATABASE_PATH,
-        small_bfd_database_path = SMALL_BFD_DATABASE_PATH,
-        uniprot_cluster_annot_database_path = UNIPROT_CLUSTER_ANNOT_DATABASE_PATH,
-        uniref90_database_path = UNIREF90_DATABASE_PATH
+        os.path.join(OUTDIR,"rule_PREPARE_TEMPLATES_AF2","{template}","{seq_id}_{template}","template_data","templates.flag")
     output:
-        os.path.join(OUTDIR,"rule_AF3_DATA_PLUS_INFERENCE","{template}","{seq_id}_{template}","{seq_id}_{template}_model.cif")
+        os.path.join(OUTDIR,"rule_AF2_DATA_PLUS_INFERENCE","{template}","{seq_id}_{template}","ranked_0.pdb")
     container:
-        AF3_CONTAINER
+        AF_UNMASKED_CONTAINER
     shell:
         """
         python /app/alphafold/run_alphafold.py \
-        --json_path=/root/af_output/rule_PREPARE_TEMPLATES_AF3/{wildcards.template}/{wildcards.seq_id}_{wildcards.template}/fold_input.json \
-        --model_dir=/root/models \
-        --output_dir=/root/af_output/rule_AF3_DATA_PLUS_INFERENCE/{wildcards.template} \
-        --db_dir=/root/public_databases \
-        --run_data_pipeline=true \
-        --run_inference=true \
-        --buckets={params.buckets} \
-        --flash_attention_implementation={params.flash_attention_implementation} \
-        --hmmalign_binary_path={params.hmmalign_binary_path} \
-        --hmmbuild_binary_path={params.hmmbuild_binary_path} \
-        --hmmsearch_binary_path={params.hmmsearch_binary_path} \
-        --jackhmmer_binary_path={params.jackhmmer_binary_path} \
-        --jackhmmer_n_cpu={params.jackhmmer_n_cpu} \
-        --jax_compilation_cache_dir={params.jax_compilation_cache_dir} \
-        --max_template_date={params.max_template_date} \
-        --mgnify_database_path={params.mgnify_database_path} \
-        --nhmmer_binary_path={params.nhmmer_binary_path} \
-        --nhmmer_n_cpu={params.nhmmer_n_cpu} \
-        --ntrna_database_path={params.ntrna_database_path} \
-        --num_diffusion_samples={params.num_diffusion_samples} \
-        {params.num_seeds_arg} \
-        --pdb_database_path={params.pdb_database_path} \
-        --rfam_database_path={params.rfam_database_path} \
-        --rna_central_database_path={params.rna_central_database_path} \
-        --seqres_database_path={params.seqres_database_path} \
-        --small_bfd_database_path={params.small_bfd_database_path} \
-        --uniprot_cluster_annot_database_path={params.uniprot_cluster_annot_database_path} \
-        --uniref90_database_path={params.uniref90_database_path} \
-        --cross_chain_templates=true
+        --fasta_paths=/root/af_output/rule_SANITISE_NAMES/{wildcards.template}/{wildcards.seq_id}_{wildcards.template}.fasta \
+        --flagfile databases_full.flag \
+        --flagfile /root/af_output/rule_PREPARE_TEMPLATES_AF2/{wildcards.template}/{wildcards.seq_id}_{wildcards.template}/template_data/templates.flag \
+        --output_dir=/root/af_output/rule_AF2_DATA_PLUS_INFERENCE/{wildcards.template} \
+        --cross_chain_templates \
+        --models_to_use=model_5_multimer_v2,model_5_multimer_v3 \
+        --separate_homomer_msas
         """
 
 # touch missing output files due to a bug, presumably in af_unmasked for alphafold 3
 
 
-rule REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB:
+rule COLLECT_TOP_PREDICTIONS:
     input:
-        os.path.join(OUTDIR,"rule_AF3_DATA_PLUS_INFERENCE","{template}","{seq_id}_{template}","{seq_id}_{template}_model.cif")
+        os.path.join(OUTDIR,"rule_AF2_DATA_PLUS_INFERENCE","{template}","{seq_id}_{template}","ranked_0.pdb")
     output:
-        os.path.join(OUTDIR,"rule_REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB","{template}","{seq_id}_{template}_model.pdb")
-    resources:
-        slurm_account="cssb",
-        slurm_partition="topfgpu",
-        nodes=1,
-        runtime=20,
+        os.path.join(OUTDIR,"rule_COLLECT_TOP_PREDICTIONS","{template}","{seq_id}_{template}_ranked_0.pdb")
     shell:
         """
-        python workflow/scripts/cif_2pdb.py {input} {output}
+        cp {input} {output}
         """
 
 checkpoint PREPARE_COMBFOLD_INPUT:
@@ -253,7 +174,7 @@ checkpoint PREPARE_COMBFOLD_INPUT:
 rule RUN_COMBFOLD_ASSEMBLY:
     input:
         subunits_json = os.path.join(OUTDIR,"rule_PREPARE_COMBFOLD_INPUT","{template}","{comb}.json"),
-        pdbs = get_rule_AF3_DATA_PLUS_INFERENCE
+        pdbs = get_rule_AF2_DATA_PLUS_INFERENCE
 #        pdbs = expand(os.path.join(OUTDIR,"rule_REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB","{template}","{seq_id}_{template}_model.pdb"),template = SANITISED_TEMPLATES.split(","), seq_id = SANITISED_SEQ_IDS),
     output:
         os.path.join(OUTDIR,"rule_RUN_COMBFOLD_ASSEMBLY","{template}","{comb}","assembled_results","confidence.txt")

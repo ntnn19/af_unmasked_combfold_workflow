@@ -9,7 +9,7 @@ set-resources:
         slurm_partition: "allcpu"
         nodes: 1
         runtime: 100
-    AF3_DATA_PLUS_INFERENCE:
+    AF2_DATA_PLUS_INFERENCE:
         slurm_partition: "allgpu,vds,cssbgpu"
         nodes: 1
         runtime: 1000
