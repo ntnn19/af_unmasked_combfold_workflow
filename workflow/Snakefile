@@ -1,4 +1,4 @@
-localrules: REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB, PREPARE_COMBFOLD_INPUT, PREPARE_TEMPLATES_AF3, SANITISE_NAMES, PREPARE_AF_UNMAKSED_INPUTS
+localrules: COLLECT_TOP_PREDICTIONS, PREPARE_COMBFOLD_INPUT, PREPARE_TEMPLATES_AF3, SANITISE_NAMES, PREPARE_AF_UNMAKSED_INPUTS, RUN_COMBFOLD_ASSEMBLY
 from Bio import SeqIO
 import os
 import string 
@@ -24,6 +24,8 @@ SEQ_IDS = list(SeqIO.to_dict(SeqIO.parse(INPUT_FASTA,"fasta")).keys())
 TEMPLATES, = glob_wildcards(os.path.join(TEMPLATES_DIR, "{template}.pdb"))
 SANITISED_TEMPLATES = ",".join([sanitise_name(t) for t in TEMPLATES])
 SANITISED_SEQ_IDS = [sanitise_name(s) for s in SEQ_IDS]
+print("SANITISED_TEMPLATES=",SANITISED_TEMPLATES)
+print("SANITISED_SEQ_IDS=",SANITISED_SEQ_IDS)
 
 # AF3 FLAGS
 BUCKETS = get_af3_flag_value('--buckets', '256,512,768,1024,1280,1536,2048,2560,3072,3584,4096,4608,5120')
@@ -73,7 +75,7 @@ def get_rule_RUN_COMBFOLD_ASSEMBLY(wildcards):
 
 def get_rule_PREPARE_TEMPLATES_AF3(wildcards):
     ck_outputs = checkpoints.PREPARE_AF_UNMAKSED_INPUTS.get(**wildcards).output[0]
-    print("get_rule_AF3_DATA_PLUS_INFERENCE=",ck_outputs)
+    print("get_rule_PREPARE_TEMPLATES_AF3=",ck_outputs)
     TEMPLATES, SEQ_IDS, = glob_wildcards(os.path.join(ck_outputs, "{template}","{seq_id}_{template}.fasta"))
     return expand(os.path.join(OUTDIR,"rule_PREPARE_TEMPLATES_AF3","{template}","{seq_id}_{template}","fold_input.json"), template = TEMPLATES , seq_id = SEQ_IDS)
 
@@ -85,7 +87,7 @@ def get_rule_PREPARE_COMBFOLD_INPUT(wildcards):
 
 def get_rule_PREPARE_AF_UNMAKSED_INPUTS(wildcards):
     ck_outputs = checkpoints.PREPARE_AF_UNMAKSED_INPUTS.get(**wildcards).output[0]
-    print("get_rule_AF3_DATA_PLUS_INFERENCE=",ck_outputs)
+    print("get_rule_PREPARE_AF_UNMAKSED_INPUTS=",ck_outputs)
     TEMPLATES, SEQ_IDS, = glob_wildcards(os.path.join(ck_outputs, "{template}","{seq_id}_{template}.fasta"))
     return expand(os.path.join(ck_outputs,"{template}","{seq_id}_{template}.fasta"), template = TEMPLATES , seq_id = SEQ_IDS)
 
@@ -93,7 +95,7 @@ def get_rule_AF3_DATA_PLUS_INFERENCE(wildcards):
     ck_outputs = checkpoints.SANITISE_NAMES.get(**wildcards).output[0]
     print("get_rule_AF3_DATA_PLUS_INFERENCE=",ck_outputs)
     TEMPLATES, SEQ_IDS, = glob_wildcards(os.path.join(ck_outputs, "{template}","{seq_id}_{template}.fasta"))
-    return expand(os.path.join(OUTDIR,"rule_AF3_DATA_PLUS_INFERENCE", "{template}","{seq_id}_{template}","{seq_id}_{template}_model.cif"), template = TEMPLATES , seq_id = SEQ_IDS)
+    return expand(os.path.join(OUTDIR,"rule_COLLECT_TOP_PREDICTIONS", "{template}","{seq_id}_{template}_model.pdb"), template = TEMPLATES , seq_id = SEQ_IDS)
 
 rule all:
     input:
@@ -220,11 +222,11 @@ rule AF3_DATA_PLUS_INFERENCE:
 # touch missing output files due to a bug, presumably in af_unmasked for alphafold 3
 
 
-rule REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB:
+rule COLLECT_TOP_PREDICTIONS:
     input:
         os.path.join(OUTDIR,"rule_AF3_DATA_PLUS_INFERENCE","{template}","{seq_id}_{template}","{seq_id}_{template}_model.cif")
     output:
-        os.path.join(OUTDIR,"rule_REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB","{template}","{seq_id}_{template}_model.pdb")
+        os.path.join(OUTDIR,"rule_COLLECT_TOP_PREDICTIONS","{template}","{seq_id}_{template}_model.pdb")
     resources:
         slurm_account="cssb",
         slurm_partition="topfgpu",
@@ -253,8 +255,8 @@ checkpoint PREPARE_COMBFOLD_INPUT:
 rule RUN_COMBFOLD_ASSEMBLY:
     input:
         subunits_json = os.path.join(OUTDIR,"rule_PREPARE_COMBFOLD_INPUT","{template}","{comb}.json"),
-        pdbs = get_rule_AF3_DATA_PLUS_INFERENCE
-#        pdbs = expand(os.path.join(OUTDIR,"rule_REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB","{template}","{seq_id}_{template}_model.pdb"),template = SANITISED_TEMPLATES.split(","), seq_id = SANITISED_SEQ_IDS),
+        pdbs = get_rule_AF3_DATA_PLUS_INFERENCE,
+#        pdbs = expand(os.path.join(OUTDIR,"rule_COLLECT_TOP_PREDICTIONS","{template}","{seq_id}_{template}_model.pdb"),template = SANITISED_TEMPLATES.split(","), seq_id = SANITISED_SEQ_IDS)
     output:
         os.path.join(OUTDIR,"rule_RUN_COMBFOLD_ASSEMBLY","{template}","{comb}","assembled_results","confidence.txt")
     container:
@@ -264,6 +266,6 @@ rule RUN_COMBFOLD_ASSEMBLY:
         rm -rf {OUTDIR}/rule_RUN_COMBFOLD_ASSEMBLY/{wildcards.template}/{wildcards.comb}
         python /app/CombFold-master/scripts/run_on_pdbs.py \
         {input.subunits_json} \
-        {OUTDIR}/rule_REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB/{wildcards.template} \
+        {OUTDIR}/rule_COLLECT_TOP_PREDICTIONS/{wildcards.template} \
         {OUTDIR}/rule_RUN_COMBFOLD_ASSEMBLY/{wildcards.template}/{wildcards.comb}
         """
