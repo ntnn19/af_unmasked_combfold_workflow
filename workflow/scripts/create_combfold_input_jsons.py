@@ -14,14 +14,13 @@ def generate_combinations(max_counts, uniform=False):
             continue  # skip non-uniform combos
         yield dict(zip(keys, combo))
 
+
 def chain_name_generator():
-    """Generate chain names like A, B, ..., Z, AA, AB, ..."""
-    letters = string.ascii_uppercase
-    for l in letters:
-        yield l
-    for i in range(2, 4):  # A-Z, then AA-ZZ, AAA-ZZZ if needed
-        for combo in product(letters, repeat=i):
-            yield ''.join(combo)
+    """Generate valid PDB chain IDs: A–Z, then a–z."""
+    for c in string.ascii_uppercase:
+        yield c
+    for c in string.ascii_lowercase:
+        yield c
 
 @click.command()
 @click.argument("fasta_file", type=click.Path(exists=True))

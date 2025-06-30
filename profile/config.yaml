@@ -3,6 +3,7 @@ executor: slurm
 default-resources:
     slurm_partition: "allcpu"
     slurm_account: "cssb"
+    runtime: 1000
 
 set-resources:
     PREPARE_TEMPLATES_AF3:

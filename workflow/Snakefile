@@ -3,6 +3,7 @@ from Bio import SeqIO
 import os
 import string 
 import shutil
+import re
 
 def get_af3_flag_value(flag, default_value):
     return config.get('alphafold3_flags', {}).get(flag, default_value)
@@ -65,13 +66,16 @@ def get_rule_AF2_DATA_PLUS_INFERENCE(wildcards):
     ck_outputs = checkpoints.SANITISE_NAMES.get(**wildcards).output[0]
     print("get_rule_AF2_DATA_PLUS_INFERENCE=",ck_outputs)
     TEMPLATES, SEQ_IDS, = glob_wildcards(os.path.join(ck_outputs, "{template}","{seq_id}_{template}.fasta"))
-    return expand(os.path.join(OUTDIR,"rule_COLLECT_TOP_PREDICTIONS","{template}","{seq_id}_{template}_ranked_0.pdb"), template = TEMPLATES , seq_id = SEQ_IDS)
+    count_matches = [re.findall(r'(\d+)', s) for s in SEQ_IDS]
+    counts = [sum(list(map(lambda x: int(x),c))) for c in count_matches]
+    counts_d = dict(zip(SEQ_IDS,counts))
+    return expand(os.path.join(OUTDIR,"rule_COLLECT_TOP_PREDICTIONS","{template}","{seq_id}_{template}_ranked_0.pdb"), template = TEMPLATES , seq_id = [s for s in SEQ_IDS if counts_d[s] <= 3])
 
 rule all:
     input:
-        get_rule_AF2_DATA_PLUS_INFERENCE,
-        get_rule_PREPARE_COMBFOLD_INPUT,
         get_rule_RUN_COMBFOLD_ASSEMBLY
+#        get_rule_AF2_DATA_PLUS_INFERENCE,
+#        get_rule_PREPARE_COMBFOLD_INPUT,
 
 checkpoint PREPARE_AF_UNMAKSED_INPUTS:
     input:
@@ -185,6 +189,6 @@ rule RUN_COMBFOLD_ASSEMBLY:
         rm -rf {OUTDIR}/rule_RUN_COMBFOLD_ASSEMBLY/{wildcards.template}/{wildcards.comb}
         python /app/CombFold-master/scripts/run_on_pdbs.py \
         {input.subunits_json} \
-        {OUTDIR}/rule_REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB/{wildcards.template} \
+        {OUTDIR}/rule_COLLECT_TOP_PREDICTIONS/{wildcards.template} \
         {OUTDIR}/rule_RUN_COMBFOLD_ASSEMBLY/{wildcards.template}/{wildcards.comb}
         """
