@@ -1,4 +1,4 @@
-localrules: REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB, PREPARE_COMBFOLD_INPUT, PREPARE_TEMPLATES_AF3, SANITISE_NAMES
+localrules: REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB, PREPARE_COMBFOLD_INPUT, PREPARE_TEMPLATES_AF3, SANITISE_NAMES, PREPARE_AF_UNMAKSED_INPUTS
 from Bio import SeqIO
 import os
 import string 
@@ -13,7 +13,7 @@ def sanitise_name(name):
     allowed_chars = set(string.ascii_lowercase + string.digits + '_-.')
     return ''.join(l for l in lower_spaceless_name if l in allowed_chars)
 
-
+WORKFLOW_DIR = workflow.basedir
 TEMPLATES_DIR = config["templates_dir"]
 OUTDIR = config["output_dir"]
 INPUT_FASTA = config["input_fasta"]
@@ -110,7 +110,7 @@ checkpoint PREPARE_AF_UNMAKSED_INPUTS:
         directory(os.path.join(OUTDIR,"rule_PREPARE_AF_UNMAKSED_INPUTS"))
     shell:
         """
-        python workflow/scripts/prepare_csv_from_fasta.py {input.fasta} --output-dir {output} -t {params.templates_dir} --max-size 3
+        python {WORKFLOW_DIR}/scripts/prepare_csv_from_fasta.py {input.fasta} --output-dir {output} -t {params.templates_dir} --max-size 3
         """
 
 checkpoint SANITISE_NAMES:
@@ -232,7 +232,7 @@ rule REMOVE_DNA_FROM_CIF_AND_SAVE_AS_PDB:
         runtime=20,
     shell:
         """
-        python workflow/scripts/cif_2pdb.py {input} {output}
+        python {WORKFLOW_DIR}/scripts/cif_2pdb.py {input} {output}
         """
 
 checkpoint PREPARE_COMBFOLD_INPUT:
@@ -246,7 +246,7 @@ checkpoint PREPARE_COMBFOLD_INPUT:
         directory(os.path.join(OUTDIR,"rule_PREPARE_COMBFOLD_INPUT"))
     shell:
         """
-        python workflow/scripts/create_combfold_input_jsons.py {input.fasta} {params.stoichio} {params.uniform_copies} -d {OUTDIR}/rule_PREPARE_COMBFOLD_INPUT -t {params.sanitised_templates}
+        python {WORKFLOW_DIR}/scripts/create_combfold_input_jsons.py {input.fasta} {params.stoichio} {params.uniform_copies} -d {OUTDIR}/rule_PREPARE_COMBFOLD_INPUT -t {params.sanitised_templates}
         """
 
 
