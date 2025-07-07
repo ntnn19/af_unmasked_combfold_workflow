@@ -69,6 +69,8 @@ def generate_combinations(fasta_file, min_size, max_size, output, output_dir, te
                         description=record_id
                     ))
 
+            if sum(list(map(lambda x: len(x.seq),seq_records))) >  4352:
+                continue
             # Save FASTA in this template subdirectory
             fasta_path = template_dir / f"{job_name}.fasta"
             SeqIO.write(seq_records, fasta_path, "fasta")

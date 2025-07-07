@@ -21,6 +21,8 @@ def chain_name_generator():
         yield l
     for i in range(2, 4):  # A-Z, then AA-ZZ, AAA-ZZZ if needed
         for combo in product(letters, repeat=i):
+            if len(combo)>1:
+                combo = list(map(lambda x: x.lower(), combo))
             yield ''.join(combo)
 
 @click.command()
